@@ -3,7 +3,7 @@ import { getFirestore } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
 
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: "AIzaSyAG9swFp4kJK23qSXaa34mWGUGD4iA6uK0",
   authDomain: "clinicheck-668a2.firebaseapp.com",
   databaseURL: "https://clinicheck-668a2-default-rtdb.europe-west1.firebasedatabase.app",
