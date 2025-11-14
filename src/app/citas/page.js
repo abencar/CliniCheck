@@ -1,44 +1,163 @@
 'use client'
 import React, { useEffect, useState } from 'react';
 import Sidebar from '../../components/Sidebar';
-import ProtectedRoute from '../../components/ProtectedRoute';
+import ProtectedRoute, { useUser } from '../../components/ProtectedRoute';
 
-const Citas = () => {
+const CitasContent = () => {
+  const user = useUser();
   const [citas, setCitas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [processingIds, setProcessingIds] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
+  const [medicoIdActual, setMedicoIdActual] = useState(null);
+  const isAdmin = (user?.rol === 'admin');
 
+  const sortCitas = (arr) => {
+    // Priorizar pendientes, luego confirmadas, luego rechazadas; mantener el resto al final
+    const order = { pendiente: 0, confirmado: 1, rechazado: 2 };
+    return [...arr].sort((a, b) => {
+      const ea = (a.estado || 'pendiente').toString();
+      const eb = (b.estado || 'pendiente').toString();
+      const pa = order[ea] !== undefined ? order[ea] : 3;
+      const pb = order[eb] !== undefined ? order[eb] : 3;
+      if (pa !== pb) return pa - pb;
+      // Si mismo grupo, ordenar por createdAt descendente (más reciente primero)
+      const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return tb - ta;
+    });
+  };
+
+  // Ajustar pageSize dinámicamente para que las tarjetas quepan en la pantalla y no sea necesario scrollear
   useEffect(() => {
-    const fetchCitas = async () => {
+    const computePageSize = () => {
       try {
-        setLoading(true);
-        const response = await fetch('/api/citas');
-        if (!response.ok) throw new Error('Error al cargar citas');
-        const data = await response.json();
-        setCitas(data);
-      } catch (err) {
-        setError(err.message);
-        console.error('Error:', err);
-      } finally {
-        setLoading(false);
+        const available = window.innerHeight - 220; // espacio aproximado para header, padding y paginación
+        const example = document.querySelector('.cita-card');
+        const cardHeight = example ? Math.ceil(example.getBoundingClientRect().height + 16) : 140; // fallback
+        const newSize = Math.max(1, Math.floor(available / cardHeight));
+        setPageSize(prev => prev === newSize ? prev : newSize);
+        setCurrentPage(1);
+      } catch (e) {
+        // no hacer nada en entornos sin window
       }
     };
 
-    fetchCitas();
+    computePageSize();
+    window.addEventListener('resize', computePageSize);
+    return () => window.removeEventListener('resize', computePageSize);
   }, []);
 
+
+  const handleUpdateEstado = async (id, nuevoEstado) => {
+    console.debug('[citas] start handleUpdateEstado', { id, nuevoEstado });
+    // Actualización optimista: aplicar cambio local inmediato
+    setProcessingIds(prev => prev.includes(id) ? prev : [...prev, id]);
+  const previousCitas = citas;
+  setCitas(prev => sortCitas(prev.map(c => c.id === id ? { ...c, estado: nuevoEstado } : c)));
+  setCurrentPage(1);
+
+    try {
+      const response = await fetch('/api/citas', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, estado: nuevoEstado, userUid: user?.uid })
+      });
+
+      const data = await response.json().catch(() => ({}));
+      console.debug('[citas] PATCH response', response.status, data);
+
+      if (!response.ok) {
+        throw new Error(data?.error || 'Error al actualizar cita');
+      }
+
+      // Para asegurar sincronía con la BD, volver a traer la lista
+      await fetchCitas();
+    } catch (err) {
+      console.error('Error actualizando estado de cita:', err);
+      alert('Error actualizando cita: ' + err.message);
+      // Revertir al estado previo
+      setCitas(previousCitas);
+    } finally {
+      setProcessingIds(prev => prev.filter(x => x !== id));
+    }
+  };
+
+  const fetchCitas = async () => {
+    try {
+      setLoading(true);
+      const url = user?.uid ? `/api/citas?userUid=${user.uid}` : '/api/citas';
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Error al cargar citas');
+  const data = await response.json();
+  setCitas(sortCitas(data));
+  setCurrentPage(1);
+      setError(null);
+    } catch (err) {
+      setError(err.message || String(err));
+      console.error('Error cargando citas:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Resolver medicoId del usuario si es médico
+  useEffect(() => {
+    const resolverMedicoId = async () => {
+      if (user?.rol !== 'medico' || !user?.uid) return;
+      try {
+        const res = await fetch('/api/medicos');
+        if (!res.ok) return;
+        const medicos = await res.json();
+        const me = medicos.find(m => m.uid === user.uid);
+        if (me) setMedicoIdActual(me.id);
+      } catch {}
+    };
+    resolverMedicoId();
+  }, [user?.rol, user?.uid]);
+
+  useEffect(() => {
+    if (!user) return;
+    fetchCitas();
+  }, [user?.uid]);
+
+  const puedeGestionar = (cita) => {
+    if (isAdmin) return true;
+    if (user?.rol !== 'medico' || !medicoIdActual) return false;
+    if (cita.medicoId && cita.medicoId === medicoIdActual) return true;
+    if (cita.pacienteMedicoId && cita.pacienteMedicoId === medicoIdActual) return true;
+    if ((cita.medicoUid && cita.medicoUid === user.uid) || (cita.doctorUid && cita.doctorUid === user.uid)) return true;
+    // Si existe pacienteId, no sabemos el médico aquí sin consulta extra,
+    // así que por defecto no permitimos en el cliente; el servidor validará igualmente.
+    return false;
+  };
+
+  const esMia = (cita) => {
+    if (isAdmin) return true;
+    if (user?.rol !== 'medico' || !medicoIdActual) return false;
+    if (cita.medicoId && cita.medicoId === medicoIdActual) return true;
+    if ((cita.medicoUid && cita.medicoUid === user.uid) || (cita.doctorUid && cita.doctorUid === user.uid)) return true;
+    // No incluimos por pacienteId para evitar ver citas de mis pacientes asignadas a otros médicos
+    return false;
+  };
+
   return (
-    <ProtectedRoute>
-      <div className="flex min-h-screen bg-gray-200">
+    <div className="flex min-h-screen bg-gray-200">
         <Sidebar />
 
-        <main className="flex-1 p-8">
-          <div className="mb-6">
-            <h1 className="text-4xl font-bold text-gray-800 mb-2">Gestión de citas</h1>
-            <p className="text-gray-600">Administra las citas médicas</p>
+        <main className="flex-1 p-8 ml-64">
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl font-bold text-gray-800 mb-2">Gestión de citas</h1>
+              <p className="text-gray-600">Administra las citas médicas</p>
+            </div>
+            
+
           </div>
 
-        <div className="bg-white rounded-xl shadow-lg p-6 border-4 border-[#0D9498]">
+        <div className="bg-white rounded-xl shadow-lg p-6">
           {loading && (
             <div className="p-8 text-center text-gray-600">
               Cargando citas...
@@ -58,56 +177,161 @@ const Citas = () => {
           )}
           
           <div className="space-y-3">
-            {!loading && !error && citas.map((cita) => (
+            {!loading && !error && (() => {
+              const visibles = citas.filter(esMia);
+              const total = visibles.length;
+              const totalPages = Math.max(1, Math.ceil(total / pageSize));
+              const page = Math.min(Math.max(1, currentPage), totalPages);
+              const start = (page - 1) * pageSize;
+              const paginated = visibles.slice(start, start + pageSize);
+              return paginated.map((cita) => (
               <div 
                 key={cita.id}
-                className="flex items-center gap-4 p-3 border-2 border-[#0D9498] rounded-lg hover:bg-gray-50 transition bg-white"
+                className="cita-card bg-white rounded-2xl p-6 hover:shadow-lg transition-shadow duration-200 border border-gray-200"
               >
-                {/* Icono de calendario */}
-                <div className="w-10 h-10 bg-[#0D9498] rounded-full flex items-center justify-center flex-shrink-0">
-                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
+                <div className="flex items-center gap-6">
+                  {/* Icono de calendario */}
+                  <div className="w-14 h-14 bg-[#0D9498] rounded-full flex items-center justify-center flex-shrink-0 ring-2 ring-white">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
 
-                {/* Fecha y hora */}
-                <div className="flex items-center gap-2 min-w-[140px]">
-                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span className="text-sm text-gray-700">{cita.fecha}</span>
-                </div>
+                  {/* Fecha / Hora */}
+                  <div className="flex-shrink-0 min-w-[170px]">
+                    <div className="text-sm text-gray-500">Fecha</div>
+                    <div className="text-2xl font-extrabold text-[#0B6E6F]">{cita.fecha || '-'}</div>
+                    <div className="text-base text-gray-600">{cita.hora || '-'}</div>
+                  </div>
 
-                {/* Doctor */}
-                <div className="min-w-[100px]">
-                  <span className="text-sm text-gray-700">{cita.doctor}</span>
-                </div>
+                  {/* Badge de estado — más grande y centrado verticalmente */}
+                  <div className="ml-4 flex-shrink-0 self-center flex items-center">
+                    {(() => {
+                      const estado = (cita.estado || 'pendiente').toString();
+                      const base = 'px-4 py-2 rounded-full text-base font-semibold shadow-md ring-1';
+                      if (estado === 'confirmado') return <span className={`${base} bg-green-100 text-green-900 ring-green-200`}>Confirmado</span>;
+                      if (estado === 'rechazado') return <span className={`${base} bg-red-100 text-red-900 ring-red-200`}>Rechazado</span>;
+                      return <span className={`${base} bg-yellow-100 text-yellow-900 ring-yellow-200`}>Pendiente</span>;
+                    })()}
+                  </div>
 
-                {/* Médico */}
-                <div className="min-w-[120px]">
-                  <span className="text-sm text-gray-700">{cita.medico}</span>
-                </div>
+                  {/* Información principal (Paciente / Médico) */}
+                  <div className="flex-1 grid grid-cols-2 gap-6 items-center">
+                    <div>
+                      <div className="text-sm text-gray-500">Paciente</div>
+                      <div className="text-lg font-medium text-gray-900 break-words max-w-[220px]" title={cita.paciente}>{cita.paciente || '—'}</div>
+                    </div>
 
-                {/* Botones de acción */}
-                <div className="flex gap-2 ml-auto">
-                  {/* Botón Realizada */}
-                  <button className="px-4 py-1.5 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-md transition">
-                    Realizada
-                  </button>
-                  
-                  {/* Botón Completar */}
-                  <button className="px-4 py-1.5 bg-[#0D9498] hover:bg-[#0a7377] text-white text-sm font-medium rounded-md transition">
-                    Completar
-                  </button>
+                    <div>
+                      <div className="text-sm text-gray-500">Doctor</div>
+                      <div className="text-lg font-medium text-gray-700 truncate max-w-[180px]" title={cita.doctor || cita.medico}>{cita.doctor || cita.medico || '—'}</div>
+                    </div>
+                  </div>
+
+                  {/* Botones de acción */}
+                  <div className="ml-4 flex items-center gap-3">
+                    {cita.estado !== 'confirmado' && cita.estado !== 'rechazado' && puedeGestionar(cita) && (
+                      (() => {
+                        const isProcessing = processingIds.includes(cita.id);
+                        return (
+                          <>
+                            <button
+                              onClick={() => handleUpdateEstado(cita.id, 'rechazado')}
+                              disabled={isProcessing}
+                              className={`px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-all duration-150 shadow-sm ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                              {isProcessing ? 'Procesando...' : 'Rechazar'}
+                            </button>
+
+                            <button
+                              onClick={() => handleUpdateEstado(cita.id, 'confirmado')}
+                              disabled={isProcessing}
+                              className={`px-4 py-2 bg-[#0D9498] hover:bg-[#0a7579] text-white text-sm font-medium rounded-lg transition-all duration-150 shadow-sm ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                              {isProcessing ? 'Procesando...' : 'Confirmar'}
+                            </button>
+                          </>
+                        )
+                      })()
+                    )}
+                  </div>
                 </div>
               </div>
-            ))}
+              ));
+            })()}
           </div>
+
+          {/* Paginación */}
+          {!loading && !error && citas.filter(esMia).length > pageSize && (
+            <div className="mt-6 flex items-center justify-between border-t border-gray-200 pt-6">
+              <div className="text-sm font-semibold text-gray-700">
+                {(() => {
+                  const total = citas.filter(esMia).length;
+                  const start = total === 0 ? 0 : (Math.min(total, (currentPage - 1) * pageSize + 1));
+                  const end = Math.min(total, currentPage * pageSize);
+                  return `Mostrando ${start} - ${end} de ${total}`;
+                })()}
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className={`px-5 py-2.5 rounded-lg font-semibold shadow-md transition-all duration-150 ${
+                    currentPage === 1 
+                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                      : 'bg-white border-2 border-[#0D9498] text-[#0D9498] hover:bg-[#0D9498] hover:text-white'
+                  }`}
+                >
+                  ← Anterior
+                </button>
+
+                {/* Page numbers */}
+                {(() => {
+                  const totalPages = Math.max(1, Math.ceil(citas.filter(esMia).length / pageSize));
+                  const pages = [];
+                  for (let i = 1; i <= totalPages; i++) pages.push(i);
+                  return (
+                    <div className="hidden sm:flex items-center gap-2">
+                      {pages.map(p => (
+                        <button
+                          key={p}
+                          onClick={() => setCurrentPage(p)}
+                          className={`w-10 h-10 rounded-lg font-bold shadow-md transition-all duration-150 ${
+                            p === currentPage 
+                              ? 'bg-[#0D9498] text-white ring-2 ring-[#0D9498] ring-offset-2' 
+                              : 'bg-white border-2 border-gray-300 text-gray-700 hover:border-[#0D9498] hover:text-[#0D9498]'
+                          }`}
+                        >{p}</button>
+                      ))}
+                    </div>
+                  )
+                })()}
+
+                <button
+                  onClick={() => setCurrentPage(p => p + 1)}
+                  disabled={currentPage >= Math.ceil(citas.filter(esMia).length / pageSize)}
+                  className={`px-5 py-2.5 rounded-lg font-semibold shadow-md transition-all duration-150 ${
+                    currentPage >= Math.ceil(citas.filter(esMia).length / pageSize)
+                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                      : 'bg-white border-2 border-[#0D9498] text-[#0D9498] hover:bg-[#0D9498] hover:text-white'
+                  }`}
+                >
+                  Siguiente →
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </main>
     </div>
-    </ProtectedRoute>
   );
 };
 
-export default Citas;
+export default function Citas() {
+  return (
+    <ProtectedRoute>
+      <CitasContent />
+    </ProtectedRoute>
+  );
+}

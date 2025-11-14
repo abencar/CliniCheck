@@ -216,7 +216,7 @@ const Encuestas = () => {
       <div className="flex min-h-screen bg-gray-200">
         <Sidebar />
 
-        <main className="flex-1 p-8">
+        <main className="flex-1 p-8 ml-64">
           <div className="flex justify-between items-start mb-6">
             <div>
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Administracion de encuestas</h1>
@@ -233,7 +233,7 @@ const Encuestas = () => {
           </button>
         </div>
 
-        <div className="bg-white rounded-xl shadow-lg p-6 border-4 border-[#0D9498]">
+        <div className="bg-white rounded-xl shadow-lg p-6">
           {loading && (
             <div className="p-8 text-center text-gray-600">
               Cargando encuestas...
@@ -256,7 +256,7 @@ const Encuestas = () => {
             {!loading && !error && encuestas.map((encuesta) => (
               <div 
                 key={encuesta.id}
-                className="flex items-center justify-between p-4 border-2 border-[#0D9498] rounded-lg hover:bg-gray-50 transition bg-white"
+                className="flex items-center justify-between p-4 rounded-lg hover:bg-gray-50 transition bg-white border border-gray-200"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-[#0D9498] rounded-full flex items-center justify-center flex-shrink-0">
@@ -356,7 +356,7 @@ const Encuestas = () => {
                   </label>
                   
                   {formData.preguntas.map((pregunta, index) => (
-                    <div key={index} className="mb-4 p-4 border-2 border-[#0D9498] rounded-lg bg-gray-50 relative">
+                    <div key={index} className="mb-4 p-4 rounded-lg bg-gray-50 relative border border-gray-200">
                       {/* Botón eliminar pregunta */}
                       {formData.preguntas.length > 1 && (
                         <button

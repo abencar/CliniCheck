@@ -2,10 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Sidebar from '../../../components/Sidebar';
-import ProtectedRoute from '../../../components/ProtectedRoute';
+import ProtectedRoute, { useUser } from '../../../components/ProtectedRoute';
+import toast from 'react-hot-toast';
 
 const EstadisticasPaciente = () => {
   const params = useParams();
+  const user = useUser();
   const router = useRouter();
   const pacienteId = params.id;
 
@@ -25,7 +27,8 @@ const EstadisticasPaciente = () => {
     ubicacion: '',
     telefono: '',
     encuestaId: '',
-    medicoId: ''
+    medicoId: '',
+    email: ''
   });
 
   useEffect(() => {
@@ -85,7 +88,10 @@ const EstadisticasPaciente = () => {
     }
   }, [pacienteId]);
 
+  const isAdmin = user?.rol === 'admin';
+
   const handleOpenEdit = () => {
+    if (!isAdmin) return;
     setFormData({
       nombre: paciente.nombre,
       edad: paciente.edad,
@@ -93,7 +99,8 @@ const EstadisticasPaciente = () => {
       ubicacion: paciente.ubicacion,
       telefono: paciente.telefono || '',
       encuestaId: paciente.encuestaId || '',
-      medicoId: paciente.medicoId || ''
+      medicoId: paciente.medicoId || '',
+      email: paciente.email || ''
     });
     setShowEditModal(true);
   };
@@ -108,22 +115,25 @@ const EstadisticasPaciente = () => {
 
   const handleUpdate = async (e) => {
     e.preventDefault();
+    if (!isAdmin) return;
     setSubmitting(true);
 
     try {
+      const { email: unusedEmail, ...updatePayload } = formData;
+
       const response = await fetch(`/api/pacientes/${pacienteId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...updatePayload, userUid: user?.uid }),
       });
 
       if (!response.ok) throw new Error('Error al actualizar paciente');
 
       setPaciente(prev => ({
         ...prev,
-        ...formData
+        ...updatePayload
       }));
 
       if (formData.medicoId) {
@@ -137,10 +147,10 @@ const EstadisticasPaciente = () => {
       }
 
       setShowEditModal(false);
-      alert('Paciente actualizado exitosamente');
+      toast.success('Paciente actualizado exitosamente');
     } catch (err) {
       console.error('Error:', err);
-      alert('Error al actualizar paciente: ' + err.message);
+      toast.error('Error al actualizar paciente: ' + err.message);
     } finally {
       setSubmitting(false);
     }
@@ -253,12 +263,10 @@ const EstadisticasPaciente = () => {
   if (loading) {
     return (
       <ProtectedRoute>
-        <div className="flex min-h-screen bg-gray-200">
-          <Sidebar />
-          <main className="flex-1 p-8 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0D9498]"></div>
-          </main>
-        </div>
+        <Sidebar />
+        <main className="ml-64 min-h-screen bg-gray-200 p-8 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0D9498]"></div>
+        </main>
       </ProtectedRoute>
     );
   }
@@ -266,30 +274,26 @@ const EstadisticasPaciente = () => {
   if (!paciente) {
     return (
       <ProtectedRoute>
-        <div className="flex min-h-screen bg-gray-200">
-          <Sidebar />
-          <main className="flex-1 p-8">
-            <div className="text-center">
-              <h1 className="text-2xl font-bold text-gray-800 mb-4">Paciente no encontrado</h1>
-              <button
-                onClick={() => router.push('/pacientes')}
-                className="px-4 py-2 bg-[#0D9498] text-white rounded-lg hover:bg-[#0a7377]"
-              >
-                Volver a Pacientes
-              </button>
-            </div>
-          </main>
-        </div>
+        <Sidebar />
+        <main className="ml-64 min-h-screen bg-gray-200 p-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-800 mb-4">Paciente no encontrado</h1>
+            <button
+              onClick={() => router.push('/pacientes')}
+              className="px-4 py-2 bg-[#0D9498] text-white rounded-lg hover:bg-[#0a7377]"
+            >
+              Volver a Pacientes
+            </button>
+          </div>
+        </main>
       </ProtectedRoute>
     );
   }
 
   return (
     <ProtectedRoute>
-      <div className="flex min-h-screen bg-gray-200">
-        <Sidebar />
-
-        <main className="flex-1 p-8">
+      <Sidebar />
+      <main className="ml-64 min-h-screen bg-gray-200 p-8">
           <div className="mb-6">
             <button
               onClick={() => router.push('/pacientes')}
@@ -303,23 +307,39 @@ const EstadisticasPaciente = () => {
             <h1 className="text-3xl font-bold text-gray-800">Estadísticas de {paciente.nombre}</h1>
             <p className="text-gray-600">Análisis detallado de cuestionarios y evolución</p>
           </div>
-          <div className="flex gap-4 mb-6">
-            <button className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex items-center gap-2">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-              Eliminar Paciente
-            </button>
-            <button 
-              onClick={handleOpenEdit}
-              className="px-4 py-2 bg-[#0D9498] text-white rounded-lg hover:bg-[#0a7377] flex items-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-              Editar Paciente
-            </button>
-          </div>
+          {isAdmin && (
+            <div className="flex gap-4 mb-6">
+              <button
+                onClick={async () => {
+                  if (!window.confirm('¿Seguro que deseas eliminar este paciente? Esta acción no se puede deshacer.')) return;
+                  try {
+                    const res = await fetch(`/api/pacientes/${pacienteId}?userUid=${user?.uid}`, { method: 'DELETE' });
+                    const data = await res.json().catch(() => ({}));
+                    if (!res.ok) throw new Error(data?.error || 'Error al eliminar paciente');
+                    toast.success('Paciente eliminado');
+                    router.push('/pacientes');
+                  } catch (err) {
+                    toast.error(err.message);
+                  }
+                }}
+                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Eliminar Paciente
+              </button>
+              <button 
+                onClick={handleOpenEdit}
+                className="px-4 py-2 bg-[#0D9498] text-white rounded-lg hover:bg-[#0a7377] flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Editar Paciente
+              </button>
+            </div>
+          )}
 
           <div className="bg-white rounded-lg p-6 mb-6 shadow-md">
             <div className="flex items-center gap-8">
@@ -339,7 +359,7 @@ const EstadisticasPaciente = () => {
                 </svg>
                 <div>
                   <p className="text-xs text-gray-500">Email</p>
-                  <p className="font-semibold text-gray-800">{paciente.nombre.toLowerCase().replace(/\s+/g, '.')}@clinicheck.com</p>
+                  <p className="font-semibold text-gray-800">{paciente.email || `${paciente.nombre.toLowerCase().replace(/\s+/g, '.') }@clinicheck.com`}</p>
                 </div>
               </div>
 
@@ -400,73 +420,34 @@ const EstadisticasPaciente = () => {
             <div className="grid grid-cols-3 gap-6 mb-6">
               {estadisticas.map((stat, index) => {
                 if (stat.tipo === 'texto') return null;
-                const colores = [
-                  { border: 'border-blue-500', bg: 'bg-blue-50', text: 'text-blue-700', icon: 'text-blue-500' },
-                  { border: 'border-purple-500', bg: 'bg-purple-50', text: 'text-purple-700', icon: 'text-purple-500' },
-                  { border: 'border-green-500', bg: 'bg-green-50', text: 'text-green-700', icon: 'text-green-500' },
-                  { border: 'border-pink-500', bg: 'bg-pink-50', text: 'text-pink-700', icon: 'text-pink-500' },
-                  { border: 'border-indigo-500', bg: 'bg-indigo-50', text: 'text-indigo-700', icon: 'text-indigo-500' },
-                  { border: 'border-orange-500', bg: 'bg-orange-50', text: 'text-orange-700', icon: 'text-orange-500' },
-                  { border: 'border-teal-500', bg: 'bg-teal-50', text: 'text-teal-700', icon: 'text-teal-500' },
-                  { border: 'border-red-500', bg: 'bg-red-50', text: 'text-red-700', icon: 'text-red-500' }
-                ];
-                const colorScheme = colores[index % colores.length];
 
                 return (
-                  <div key={index} className={`bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden border-l-4 ${colorScheme.border}`}>
-                    <div className={`${colorScheme.bg} px-5 py-4 border-b border-gray-100`}>
+                  <div key={index} className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden flex flex-col border border-gray-200">
+                    <div className="bg-gray-50 px-5 py-4 border-b border-gray-200">
                       <div className="flex items-center gap-3">
-                        <div className={`p-2 bg-white rounded-lg shadow-sm`}>
-                          <svg className={`w-5 h-5 ${colorScheme.icon}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="p-2 bg-white rounded-lg shadow-sm border border-gray-200">
+                          <svg className="w-5 h-5 text-[#0D9498]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                           </svg>
                         </div>
-                        <h3 className={`text-sm font-bold ${colorScheme.text} flex-1`}>{stat.pregunta}</h3>
+                        <h3 className="text-sm font-bold text-gray-800 flex-1">{stat.pregunta}</h3>
                       </div>
                     </div>
-                    <div className="p-5 space-y-3">
+                    <div className="p-5 space-y-3 flex-1">
                       {stat.distribucion.map((item, idx) => {
-                        let valorColor = 'text-gray-700';
-                        let bgBar = 'bg-gray-200';
-                        
-                        if (stat.tipo === 'numerica') {
-                          const valor = Number(item.opcion);
-                          if (valor <= 3) {
-                            valorColor = 'text-green-600';
-                            bgBar = 'bg-green-500';
-                          } else if (valor <= 6) {
-                            valorColor = 'text-yellow-600';
-                            bgBar = 'bg-yellow-500';
-                          } else {
-                            valorColor = 'text-red-600';
-                            bgBar = 'bg-red-500';
-                          }
-                        } else {
-                          if (item.opcion.toLowerCase().includes('mal') || item.opcion.toLowerCase().includes('mala')) {
-                            valorColor = 'text-red-600';
-                            bgBar = 'bg-red-500';
-                          } else if (item.opcion.toLowerCase().includes('bien') || item.opcion.toLowerCase().includes('buena') || item.opcion.toLowerCase().includes('excelente')) {
-                            valorColor = 'text-green-600';
-                            bgBar = 'bg-green-500';
-                          } else {
-                            valorColor = 'text-yellow-600';
-                            bgBar = 'bg-yellow-500';
-                          }
-                        }
-
                         return (
                           <div key={idx} className="space-y-1">
                             <div className="flex items-center justify-between">
-                              <span className={`text-sm font-semibold ${valorColor}`}>
+                              <span className="text-sm font-semibold text-gray-700">
                                 {item.opcion}
                               </span>
-                              <span className={`text-lg font-bold ${valorColor}`}>
+                              <span className="text-lg font-bold text-gray-800">
                                 {item.porcentaje}%
                               </span>
                             </div>
                             <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
                               <div 
-                                className={`${bgBar} h-full rounded-full transition-all duration-500 ease-out`}
+                                className="bg-[#0D9498] h-full rounded-full transition-all duration-500 ease-out"
                                 style={{ width: `${item.porcentaje}%` }}
                               ></div>
                             </div>
@@ -475,7 +456,7 @@ const EstadisticasPaciente = () => {
                       })}
                     </div>
 
-                    <div className={`${colorScheme.bg} px-5 py-3 border-t border-gray-100`}>
+                    <div className="bg-gray-50 px-5 py-3 border-t border-gray-200">
                       <p className="text-xs text-gray-600 text-center">
                         <span className="font-semibold">{stat.totalRespuestas}</span> {stat.totalRespuestas === 1 ? 'respuesta' : 'respuestas'}
                       </p>
@@ -510,7 +491,7 @@ const EstadisticasPaciente = () => {
                     : 'Fecha no disponible';
 
                   return (
-                    <div key={respuesta.id} className="border-2 border-[#0D9498] rounded-lg p-5 bg-gray-50">
+                    <div key={respuesta.id} className="rounded-lg p-5 bg-gray-50 border border-gray-200">
                       <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-300">
                         <h4 className="font-bold text-gray-800">{fecha}</h4>
                       </div>
@@ -541,8 +522,8 @@ const EstadisticasPaciente = () => {
             )}
           </div>
         </main>
-      </div>
-      {showEditModal && (
+
+        {showEditModal && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4"
           onClick={() => setShowEditModal(false)}
@@ -608,7 +589,6 @@ const EstadisticasPaciente = () => {
                     <option value="">Seleccionar</option>
                     <option value="Masculino">Masculino</option>
                     <option value="Femenino">Femenino</option>
-                    <option value="Otro">Otro</option>
                   </select>
                 </div>
 
@@ -636,6 +616,20 @@ const EstadisticasPaciente = () => {
                     value={formData.telefono}
                     onChange={handleInputChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0D9498] text-gray-900 bg-white"
+                  />
+                </div>
+
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email del paciente
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    disabled
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-700"
                   />
                 </div>
 
