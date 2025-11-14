@@ -6,6 +6,17 @@ export async function PUT(request, { params }) {
   try {
     const { id } = params;
     const body = await request.json();
+    const { userUid, ...updates } = body;
+    if (!userUid) {
+      return NextResponse.json({ error: 'Falta userUid' }, { status: 400 });
+    }
+  
+    const userRef = doc(db, 'usuarios', userUid);
+    const userSnap = await getDoc(userRef);
+    const rol = userSnap.exists() ? (userSnap.data().rol || 'medico') : 'medico';
+    if (rol !== 'admin') {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+    }
     
     const pacienteRef = doc(db, 'pacientes', id);
     
@@ -17,7 +28,7 @@ export async function PUT(request, { params }) {
       );
     }
     
-    await updateDoc(pacienteRef, body);
+    await updateDoc(pacienteRef, updates);
     
     return NextResponse.json(
       { message: 'Paciente actualizado exitosamente', id },
@@ -35,6 +46,17 @@ export async function PUT(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     const { id } = params;
+    const { searchParams } = new URL(request.url);
+    const userUid = searchParams.get('userUid');
+    if (!userUid) {
+      return NextResponse.json({ error: 'Falta userUid' }, { status: 400 });
+    }
+    const userRef = doc(db, 'usuarios', userUid);
+    const userSnap = await getDoc(userRef);
+    const rol = userSnap.exists() ? (userSnap.data().rol || 'medico') : 'medico';
+    if (rol !== 'admin') {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+    }
     
     const pacienteRef = doc(db, 'pacientes', id);
     

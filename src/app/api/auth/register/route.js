@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 export async function POST(request) {
   try {
@@ -14,6 +15,14 @@ export async function POST(request) {
     }
 
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    
+    // Guardar el rol del usuario en Firestore
+    const userDoc = doc(db, 'usuarios', userCredential.user.uid);
+    await setDoc(userDoc, {
+      email: userCredential.user.email,
+      rol: type || 'medico', // o 'admin'
+      createdAt: serverTimestamp()
+    });
     
     return NextResponse.json(
       { 

@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
+import { adminAuth } from '@/lib/firebaseAdmin';
 import { doc, updateDoc, deleteDoc, getDoc } from 'firebase/firestore';
 
 export async function PUT(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     
     const medicoRef = doc(db, 'medicos', id);
@@ -34,7 +35,7 @@ export async function PUT(request, { params }) {
 
 export async function DELETE(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     
     const medicoRef = doc(db, 'medicos', id);
     
@@ -45,7 +46,23 @@ export async function DELETE(request, { params }) {
         { status: 404 }
       );
     }
+
+    // Obtener el uid del médico
+    const medicoData = medicoDoc.data();
+    const uid = medicoData.uid;
+
+    try {
+      // Eliminar el usuario de Firebase Auth usando Admin SDK
+      await adminAuth.deleteUser(uid);
+    } catch (authError) {
+      console.error('Error deleting user from Auth:', authError);
+      return NextResponse.json(
+        { error: 'Error al eliminar el usuario de autenticación' },
+        { status: 500 }
+      );
+    }
     
+    // Eliminar el documento de Firestore
     await deleteDoc(medicoRef);
     
     return NextResponse.json(
