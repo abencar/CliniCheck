@@ -60,3 +60,27 @@ export async function DELETE(request, { params }) {
     );
   }
 }
+
+export async function GET(request, { params }) {
+  try {
+    const { id } = params;
+    const encuestaRef = doc(db, 'encuestas', id);
+    const encuestaDoc = await getDoc(encuestaRef);
+    if (!encuestaDoc.exists()) {
+      return NextResponse.json(
+        { error: 'Encuesta no encontrada' },
+        { status: 404 }
+      );
+    }
+    return NextResponse.json(
+      { id: encuestaDoc.id, ...encuestaDoc.data() },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error('Error obteniendo encuesta:', error);
+    return NextResponse.json(
+      { error: 'Error al obtener encuesta' },
+      { status: 500 }
+    );
+  }
+}
