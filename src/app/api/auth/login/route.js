@@ -4,9 +4,6 @@ import { db, firebaseConfig } from '@/lib/firebase';
 
 const FIREBASE_LOGIN_URL = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${firebaseConfig.apiKey}`;
 
-/**
- * Inicia sesión para pacientes utilizando Firebase Authentication y valida su rol.
- */
 export async function POST(request) {
   try {
     const { email, password } = await request.json();

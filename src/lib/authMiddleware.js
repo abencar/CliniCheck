@@ -1,10 +1,6 @@
 import { auth } from './firebase';
 
-/**
- * Valida el token de Firebase del header Authorization
- * @param {Request} request
- * @returns {Promise<{valid: boolean, uid?: string, error?: string}>}
- */
+
 export async function validateAuthToken(request) {
   try {
     const authHeader = request.headers.get('Authorization');
@@ -27,10 +23,6 @@ export async function validateAuthToken(request) {
   }
 }
 
-/**
- * Extrae el UID del usuario autenticado desde el header o body
- */
 export function getUserIdFromRequest(request, body) {
-  // Por ahora, confiar en el pacienteId del body
   return body.pacienteId || null;
 }
