@@ -364,7 +364,7 @@ const PacientesContent = () => {
                     onClick={() => window.location.href = `/pacientes/${paciente.id}`}
                     className="px-4 py-2 text-[#0D9498] hover:bg-[#0D9498] hover:text-white border border-[#0D9498] rounded-lg transition font-medium"
                   >
-                    Ver estadísticas
+                    Ver paciente
                   </button>
                 </div>
               </div>

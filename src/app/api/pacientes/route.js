@@ -88,7 +88,6 @@ export async function GET(request) {
       
       if (userSnap.exists()) {
         const userData = userSnap.data();
-        console.log('Usuario encontrado. Rol:', userData.rol);
         
         if (userData.rol === 'medico') {
           // Si es médico, buscar su ID en la colección de médicos
@@ -97,7 +96,6 @@ export async function GET(request) {
           const medico = medicosSnapshot.docs.find(doc => doc.data().uid === userUid);
           
           if (medico) {
-            console.log('Médico encontrado con ID:', medico.id);
             // Filtrar solo los pacientes asignados a este médico
             const pacientesRef = collection(db, 'pacientes');
             const q = query(pacientesRef, where('medicoId', '==', medico.id));
@@ -107,13 +105,10 @@ export async function GET(request) {
               id: doc.id,
               ...doc.data()
             }));
-            console.log('Pacientes del médico:', pacientes.length);
           } else {
-            console.log('Médico no encontrado en colección médicos');
           }
         } else {
           // Si es admin, mostrar todos los pacientes
-          console.log('Usuario es admin, cargando todos los pacientes');
           const pacientesRef = collection(db, 'pacientes');
           const snapshot = await getDocs(pacientesRef);
           
@@ -121,11 +116,9 @@ export async function GET(request) {
             id: doc.id,
             ...doc.data()
           }));
-          console.log('Total pacientes (admin):', pacientes.length);
         }
       } else {
         // Usuario no existe en colección usuarios, devolver todos (asumir admin)
-        console.log('Usuario NO encontrado en colección usuarios, asumiendo admin');
         const pacientesRef = collection(db, 'pacientes');
         const snapshot = await getDocs(pacientesRef);
         
@@ -133,11 +126,9 @@ export async function GET(request) {
           id: doc.id,
           ...doc.data()
         }));
-        console.log('Total pacientes (sin rol):', pacientes.length);
       }
     } else {
       // Sin userUid, devolver todos
-      console.log('Sin userUid, devolviendo todos los pacientes');
       const pacientesRef = collection(db, 'pacientes');
       const snapshot = await getDocs(pacientesRef);
       
@@ -145,12 +136,10 @@ export async function GET(request) {
         id: doc.id,
         ...doc.data()
       }));
-      console.log('Total pacientes:', pacientes.length);
     }
 
     return NextResponse.json(pacientes);
   } catch (error) {
-    console.error('Error fetching pacientes:', error);
     return NextResponse.json(
       { error: 'Error al obtener pacientes', details: error.message },
       { status: 500 }
@@ -164,7 +153,6 @@ export async function POST(request) {
   try {
     transporter = getMailTransporter();
   } catch (configError) {
-    console.error('SMTP configuration error:', configError);
     return NextResponse.json(
       { error: 'Configuración SMTP no válida. Verifica las variables de entorno SMTP_HOST, SMTP_USER y SMTP_PASS.' },
       { status: 500 }
@@ -239,7 +227,6 @@ export async function POST(request) {
         html: htmlBody
       });
     } catch (mailError) {
-      console.error('Error sending patient email:', mailError);
       await pacienteDocRef.delete().catch(() => {});
       await usuarioDocRef.delete().catch(() => {});
       await adminAuth.deleteUser(userRecord.uid).catch(() => {});
@@ -254,7 +241,6 @@ export async function POST(request) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Error creating paciente:', error);
 
     if (pacienteDocRef) {
       await pacienteDocRef.delete().catch(() => {});

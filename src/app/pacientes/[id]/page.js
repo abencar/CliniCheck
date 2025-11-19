@@ -77,7 +77,7 @@ const EstadisticasPaciente = () => {
         }
 
       } catch (error) {
-        console.error('Error al cargar datos:', error);
+        // Error al cargar datos
       } finally {
         setLoading(false);
       }
@@ -149,7 +149,6 @@ const EstadisticasPaciente = () => {
       setShowEditModal(false);
       toast.success('Paciente actualizado exitosamente');
     } catch (err) {
-      console.error('Error:', err);
       toast.error('Error al actualizar paciente: ' + err.message);
     } finally {
       setSubmitting(false);
@@ -679,4 +678,10 @@ const EstadisticasPaciente = () => {
   );
 };
 
-export default EstadisticasPaciente;
+export default function PacientePage() {
+  return (
+    <ProtectedRoute>
+      <EstadisticasPaciente />
+    </ProtectedRoute>
+  );
+}

@@ -35,7 +35,6 @@ export async function PUT(request, { params }) {
       { status: 200 }
     );
   } catch (error) {
-    console.error('Error updating paciente:', error);
     return NextResponse.json(
       { error: 'Error al actualizar paciente' },
       { status: 500 }
@@ -75,7 +74,6 @@ export async function DELETE(request, { params }) {
       { status: 200 }
     );
   } catch (error) {
-    console.error('Error deleting paciente:', error);
     return NextResponse.json(
       { error: 'Error al eliminar paciente' },
       { status: 500 }
