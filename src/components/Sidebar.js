@@ -1,5 +1,6 @@
 'use client'
 import React from 'react';
+import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase';
@@ -28,7 +29,7 @@ const Sidebar = () => {
       window.location.href = '/';
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
-      alert('Error al cerrar sesión');
+      toast.error('Error al cerrar sesión');
     }
   };
 

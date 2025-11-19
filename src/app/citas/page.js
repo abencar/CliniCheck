@@ -1,5 +1,6 @@
 'use client'
 import React, { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import Sidebar from '../../components/Sidebar';
 import ProtectedRoute, { useUser } from '../../components/ProtectedRoute';
 
@@ -15,7 +16,7 @@ const CitasContent = () => {
   const isAdmin = (user?.rol === 'admin');
 
   const sortCitas = (arr) => {
-    // Priorizar pendientes, luego confirmadas, luego rechazadas; mantener el resto al final
+
     const order = { pendiente: 0, confirmado: 1, rechazado: 2 };
     return [...arr].sort((a, b) => {
       const ea = (a.estado || 'pendiente').toString();
@@ -23,25 +24,25 @@ const CitasContent = () => {
       const pa = order[ea] !== undefined ? order[ea] : 3;
       const pb = order[eb] !== undefined ? order[eb] : 3;
       if (pa !== pb) return pa - pb;
-      // Si mismo grupo, ordenar por createdAt descendente (más reciente primero)
+
       const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
       const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return tb - ta;
     });
   };
 
-  // Ajustar pageSize dinámicamente para que las tarjetas quepan en la pantalla y no sea necesario scrollear
+
   useEffect(() => {
     const computePageSize = () => {
       try {
-        const available = window.innerHeight - 220; // espacio aproximado para header, padding y paginación
+        const available = window.innerHeight - 220;
         const example = document.querySelector('.cita-card');
-        const cardHeight = example ? Math.ceil(example.getBoundingClientRect().height + 16) : 140; // fallback
+        const cardHeight = example ? Math.ceil(example.getBoundingClientRect().height + 16) : 140;
         const newSize = Math.max(1, Math.floor(available / cardHeight));
         setPageSize(prev => prev === newSize ? prev : newSize);
         setCurrentPage(1);
       } catch (e) {
-        // no hacer nada en entornos sin window
+
       }
     };
 
@@ -53,7 +54,7 @@ const CitasContent = () => {
 
   const handleUpdateEstado = async (id, nuevoEstado) => {
     console.debug('[citas] start handleUpdateEstado', { id, nuevoEstado });
-    // Actualización optimista: aplicar cambio local inmediato
+
     setProcessingIds(prev => prev.includes(id) ? prev : [...prev, id]);
   const previousCitas = citas;
   setCitas(prev => sortCitas(prev.map(c => c.id === id ? { ...c, estado: nuevoEstado } : c)));
@@ -73,12 +74,12 @@ const CitasContent = () => {
         throw new Error(data?.error || 'Error al actualizar cita');
       }
 
-      // Para asegurar sincronía con la BD, volver a traer la lista
+
       await fetchCitas();
     } catch (err) {
       console.error('Error actualizando estado de cita:', err);
-      alert('Error actualizando cita: ' + err.message);
-      // Revertir al estado previo
+      toast.error('Error actualizando cita: ' + err.message);
+
       setCitas(previousCitas);
     } finally {
       setProcessingIds(prev => prev.filter(x => x !== id));
@@ -103,7 +104,7 @@ const CitasContent = () => {
     }
   };
 
-  // Resolver medicoId del usuario si es médico
+
   useEffect(() => {
     const resolverMedicoId = async () => {
       if (user?.rol !== 'medico' || !user?.uid) return;
@@ -129,8 +130,8 @@ const CitasContent = () => {
     if (cita.medicoId && cita.medicoId === medicoIdActual) return true;
     if (cita.pacienteMedicoId && cita.pacienteMedicoId === medicoIdActual) return true;
     if ((cita.medicoUid && cita.medicoUid === user.uid) || (cita.doctorUid && cita.doctorUid === user.uid)) return true;
-    // Si existe pacienteId, no sabemos el médico aquí sin consulta extra,
-    // así que por defecto no permitimos en el cliente; el servidor validará igualmente.
+    
+    
     return false;
   };
 
@@ -139,7 +140,7 @@ const CitasContent = () => {
     if (user?.rol !== 'medico' || !medicoIdActual) return false;
     if (cita.medicoId && cita.medicoId === medicoIdActual) return true;
     if ((cita.medicoUid && cita.medicoUid === user.uid) || (cita.doctorUid && cita.doctorUid === user.uid)) return true;
-    // No incluimos por pacienteId para evitar ver citas de mis pacientes asignadas a otros médicos
+    
     return false;
   };
 

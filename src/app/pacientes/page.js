@@ -32,7 +32,7 @@ const PacientesContent = () => {
   const [filtroUbicacion, setFiltroUbicacion] = useState('');
   const [filtroMedico, setFiltroMedico] = useState('');
 
-  // Detectar cuando userData está listo
+
   useEffect(() => {
     if (userData && userData.uid) {
       setUserReady(true);
@@ -87,7 +87,7 @@ const PacientesContent = () => {
     fetchData();
   }, [userReady]);
 
-  // Si el rol es médico, limpiar el filtro por médico y mantenerlo oculto
+
   useEffect(() => {
     if (userData?.rol === 'medico' && filtroMedico !== '') {
       setFiltroMedico('');
@@ -547,7 +547,7 @@ const PacientesContent = () => {
   );
 };
 
-// Wrapper que coloca el Provider por encima del contenido
+
 export default function Pacientes() {
   return (
     <ProtectedRoute>

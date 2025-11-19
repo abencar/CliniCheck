@@ -82,7 +82,7 @@ export async function GET(request) {
     let pacientes = [];
     
     if (userUid) {
-      // Verificar el rol del usuario
+
       const userDoc = doc(db, 'usuarios', userUid);
       const userSnap = await getDoc(userDoc);
       
@@ -90,13 +90,13 @@ export async function GET(request) {
         const userData = userSnap.data();
         
         if (userData.rol === 'medico') {
-          // Si es médico, buscar su ID en la colección de médicos
+
           const medicosRef = collection(db, 'medicos');
           const medicosSnapshot = await getDocs(medicosRef);
           const medico = medicosSnapshot.docs.find(doc => doc.data().uid === userUid);
           
           if (medico) {
-            // Filtrar solo los pacientes asignados a este médico
+
             const pacientesRef = collection(db, 'pacientes');
             const q = query(pacientesRef, where('medicoId', '==', medico.id));
             const snapshot = await getDocs(q);
@@ -108,7 +108,7 @@ export async function GET(request) {
           } else {
           }
         } else {
-          // Si es admin, mostrar todos los pacientes
+
           const pacientesRef = collection(db, 'pacientes');
           const snapshot = await getDocs(pacientesRef);
           
@@ -118,7 +118,7 @@ export async function GET(request) {
           }));
         }
       } else {
-        // Usuario no existe en colección usuarios, devolver todos (asumir admin)
+
         const pacientesRef = collection(db, 'pacientes');
         const snapshot = await getDocs(pacientesRef);
         
@@ -128,7 +128,7 @@ export async function GET(request) {
         }));
       }
     } else {
-      // Sin userUid, devolver todos
+
       const pacientesRef = collection(db, 'pacientes');
       const snapshot = await getDocs(pacientesRef);
       

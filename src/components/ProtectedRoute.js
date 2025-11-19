@@ -18,7 +18,7 @@ export default function ProtectedRoute({ children }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        // Usuario autenticado, obtener su rol
+
         try {
           const userDoc = doc(db, 'usuarios', user.uid);
           const userSnap = await getDoc(userDoc);
@@ -30,7 +30,7 @@ export default function ProtectedRoute({ children }) {
               rol: data.rol || 'medico'
             });
           } else {
-            // Si no existe el documento, asignar rol de médico por defecto
+
             setUserData({
               uid: user.uid,
               email: user.email,
@@ -48,13 +48,13 @@ export default function ProtectedRoute({ children }) {
         }
         setLoading(false);
       } else {
-        // Usuario no autenticado, redirigir al login
+
         setAuthenticated(false);
         setLoading(false);
         router.push('/');
       }
     });
-    // Cleanup subscription
+
     return () => unsubscribe();
   }, [router]);
 

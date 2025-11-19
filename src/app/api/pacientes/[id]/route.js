@@ -58,7 +58,6 @@ export async function DELETE(request, { params }) {
     }
     
     const pacienteRef = doc(db, 'pacientes', id);
-    
     const pacienteDoc = await getDoc(pacienteRef);
     if (!pacienteDoc.exists()) {
       return NextResponse.json(
@@ -66,9 +65,20 @@ export async function DELETE(request, { params }) {
         { status: 404 }
       );
     }
-    
+
+
+    const pacienteData = pacienteDoc.data();
+    if (pacienteData.uid) {
+      try {
+        const { adminAuth } = await import('@/lib/firebaseAdmin');
+        await adminAuth.deleteUser(pacienteData.uid);
+      } catch (authError) {
+
+      }
+    }
+
     await deleteDoc(pacienteRef);
-    
+
     return NextResponse.json(
       { message: 'Paciente eliminado exitosamente' },
       { status: 200 }

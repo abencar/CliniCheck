@@ -43,12 +43,12 @@ const ResumenContent = () => {
   }, [user?.uid]);
 
   const citasPendientes = citas.filter(cita => (cita.estado || '').toLowerCase() === 'pendiente').length;
-  // Limitar últimas respuestas a las de mis pacientes si soy médico
+
   const pacienteUidsSet = new Set(pacientes.map(p => p.uid));
   const respuestasFiltradas = respuestas.filter(r => pacienteUidsSet.has(r.pacienteId));
   const ultimasRespuestas = respuestasFiltradas.slice(0, 4);
 
-  // Para médicos: encuestas distintas de sus pacientes
+
   const encuestasDeMisPacientes = new Set(pacientes.map(p => p.encuestaId).filter(Boolean));
   const esMedico = user?.rol === 'medico';
 

@@ -1,5 +1,6 @@
 'use client'
 import React, { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import Sidebar from '../../components/Sidebar';
 import ProtectedRoute from '../../components/ProtectedRoute';
 
@@ -139,10 +140,6 @@ const Encuestas = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('¿Estás seguro de que deseas eliminar esta encuesta?')) {
-      return;
-    }
-
     try {
       const response = await fetch(`/api/encuestas/${id}`, {
         method: 'DELETE'
@@ -154,10 +151,10 @@ const Encuestas = () => {
       const encuestasData = await encuestasResponse.json();
       setEncuestas(encuestasData);
 
-      alert('Encuesta eliminada exitosamente');
+      toast.success('Encuesta eliminada exitosamente');
     } catch (err) {
       console.error('Error:', err);
-      alert('Error al eliminar encuesta: ' + err.message);
+      toast.error('Error al eliminar encuesta: ' + err.message);
     }
   };
 
@@ -180,7 +177,7 @@ const Encuestas = () => {
         });
 
         if (!response.ok) throw new Error('Error al actualizar encuesta');
-        alert('Encuesta actualizada exitosamente');
+        toast.success('Encuesta actualizada exitosamente');
       } else {
         const response = await fetch('/api/encuestas', {
           method: 'POST',
@@ -195,7 +192,7 @@ const Encuestas = () => {
         });
 
         if (!response.ok) throw new Error('Error al crear encuesta');
-        alert('Encuesta creada exitosamente');
+        toast.success('Encuesta creada exitosamente');
       }
 
       const encuestasResponse = await fetch('/api/encuestas');
@@ -205,7 +202,7 @@ const Encuestas = () => {
       handleCloseModal();
     } catch (err) {
       console.error('Error:', err);
-      alert('Error: ' + err.message);
+      toast.error('Error: ' + err.message);
     } finally {
       setSubmitting(false);
     }
@@ -301,7 +298,7 @@ const Encuestas = () => {
               className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Header del modal */}
+
               <div className="flex justify-between items-center p-6 border-b border-gray-200 bg-gray-100">
                 <h2 className="text-2xl font-bold text-gray-800">
                   {editingEncuesta ? 'Editar Encuesta' : 'Crear Nueva Encuesta'}
@@ -316,9 +313,9 @@ const Encuestas = () => {
                 </button>
               </div>
 
-              {/* Formulario */}
+
               <form onSubmit={handleSubmit} className="p-6">
-                {/* Título */}
+
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Título
@@ -334,7 +331,7 @@ const Encuestas = () => {
                   />
                 </div>
 
-                {/* Descripción */}
+
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Descripción
@@ -349,7 +346,7 @@ const Encuestas = () => {
                   />
                 </div>
 
-                {/* Preguntas de la encuesta */}
+
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-3">
                     Preguntas de la encuesta
@@ -357,7 +354,7 @@ const Encuestas = () => {
                   
                   {formData.preguntas.map((pregunta, index) => (
                     <div key={index} className="mb-4 p-4 rounded-lg bg-gray-50 relative border border-gray-200">
-                      {/* Botón eliminar pregunta */}
+
                       {formData.preguntas.length > 1 && (
                         <button
                           type="button"
@@ -371,7 +368,7 @@ const Encuestas = () => {
                         </button>
                       )}
 
-                      {/* Título de la pregunta */}
+
                       <div className="mb-3">
                         <input
                           type="text"
@@ -383,7 +380,7 @@ const Encuestas = () => {
                         />
                       </div>
 
-                      {/* Tipo de respuesta */}
+
                       <div className="relative">
                         <label className="block text-xs text-gray-600 mb-1">Tipo de respuesta</label>
                         <select
@@ -404,7 +401,7 @@ const Encuestas = () => {
                         </div>
                       </div>
 
-                      {/* Opciones de selección múltiple */}
+
                       {pregunta.tipo === 'seleccion' && (
                         <div className="mt-4 p-3 bg-white rounded-lg border border-gray-300">
                           <label className="block text-xs text-gray-600 mb-2 font-medium">Opciones de respuesta</label>
@@ -443,7 +440,7 @@ const Encuestas = () => {
                     </div>
                   ))}
 
-                  {/* Botón agregar pregunta */}
+
                   <button
                     type="button"
                     onClick={agregarPregunta}
@@ -453,7 +450,7 @@ const Encuestas = () => {
                   </button>
                 </div>
 
-                {/* Botones */}
+
                 <div className="flex justify-end gap-3 mt-6">
                   <button
                     type="button"

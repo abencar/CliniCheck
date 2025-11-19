@@ -77,7 +77,7 @@ const EstadisticasPaciente = () => {
         }
 
       } catch (error) {
-        // Error al cargar datos
+
       } finally {
         setLoading(false);
       }
