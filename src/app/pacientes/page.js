@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import Sidebar from '../../components/Sidebar';
+import HamburgerMenu from '../../components/HamburgerMenu';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { useUser } from '../../components/ProtectedRoute';
 
@@ -182,8 +183,13 @@ const PacientesContent = () => {
 
   return (
     <>
-      <Sidebar />
-      <main className="ml-64 min-h-screen bg-gray-200 p-8">
+      <div className="hidden sm:block">
+        <Sidebar />
+      </div>
+      <div className="sm:hidden">
+        <HamburgerMenu />
+      </div>
+      <main className="min-h-screen bg-gray-200 p-8 sm:ml-64 pt-20 sm:pt-8 relative overflow-x-hidden isolate transform-gpu antialiased">
         <div className="mb-6">
           <div className="flex justify-between items-center mb-4">
             <div>
@@ -304,9 +310,9 @@ const PacientesContent = () => {
           <p className="text-sm text-gray-600">Mostrando {pacientesFiltrados.length} de {pacientes.length} pacientes</p>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-3 overflow-x-hidden min-h-[200px] sm:min-h-0 transform-gpu">
           {loading && (
-            <div className="bg-white rounded-lg p-8 text-center text-gray-600 shadow-sm">
+            <div className="bg-white rounded-lg p-8 text-center text-gray-600 shadow-sm h-32 animate-pulse">
               Cargando pacientes...
             </div>
           )}
@@ -327,16 +333,17 @@ const PacientesContent = () => {
             return (
               <div 
                 key={paciente.id}
-                className="bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition border border-gray-200"
+                className="bg-white rounded-lg p-4 sm:shadow-sm shadow-none sm:hover:shadow-md transition border-none min-h-[140px] sm:min-h-0 bg-clip-padding transform-gpu antialiased"
+                style={{ backfaceVisibility: 'hidden', transform: 'translateZ(0)' }}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4 flex-1">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 w-full">
+                  <div className="flex items-center gap-4 w-full">
                     <div className="w-12 h-12 rounded-full bg-[#0D9498] flex items-center justify-center flex-shrink-0">
                       <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
                     </div>
-                    <div className="flex-1 grid grid-cols-5 gap-4 items-center">
+                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-5 gap-4 items-center">
                       <div className="min-w-0">
                         <p className="font-semibold text-gray-800 truncate">{paciente.nombre}</p>
                         <p className="text-sm text-gray-500 truncate">{emailVisible}</p>
@@ -362,7 +369,7 @@ const PacientesContent = () => {
                   </div>
                   <button 
                     onClick={() => window.location.href = `/pacientes/${paciente.id}`}
-                    className="px-4 py-2 text-[#0D9498] hover:bg-[#0D9498] hover:text-white border border-[#0D9498] rounded-lg transition font-medium"
+                    className="w-full sm:w-auto mt-4 sm:mt-0 px-4 py-2 text-[#0D9498] hover:bg-[#0D9498] hover:text-white border border-[#0D9498] rounded-lg transition font-medium"
                   >
                     Ver paciente
                   </button>

@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Sidebar from '../../../components/Sidebar';
+import HamburgerMenu from '../../../components/HamburgerMenu';
 import ProtectedRoute, { useUser } from '../../../components/ProtectedRoute';
 import toast from 'react-hot-toast';
 
@@ -262,8 +263,13 @@ const EstadisticasPaciente = () => {
   if (loading) {
     return (
       <ProtectedRoute>
-        <Sidebar />
-        <main className="ml-64 min-h-screen bg-gray-200 p-8 flex items-center justify-center">
+        <div className="hidden sm:block">
+          <Sidebar />
+        </div>
+        <div className="sm:hidden">
+          <HamburgerMenu />
+        </div>
+        <main className="min-h-screen bg-gray-200 p-8 sm:ml-64 pt-20 sm:pt-8 flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0D9498]"></div>
         </main>
       </ProtectedRoute>
@@ -273,8 +279,13 @@ const EstadisticasPaciente = () => {
   if (!paciente) {
     return (
       <ProtectedRoute>
-        <Sidebar />
-        <main className="ml-64 min-h-screen bg-gray-200 p-8">
+        <div className="hidden sm:block">
+          <Sidebar />
+        </div>
+        <div className="sm:hidden">
+          <HamburgerMenu />
+        </div>
+        <main className="min-h-screen bg-gray-200 p-8 sm:ml-64 pt-20 sm:pt-8">
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-800 mb-4">Paciente no encontrado</h1>
             <button
@@ -291,8 +302,13 @@ const EstadisticasPaciente = () => {
 
   return (
     <ProtectedRoute>
-      <Sidebar />
-      <main className="ml-64 min-h-screen bg-gray-200 p-8">
+      <div className="hidden sm:block">
+        <Sidebar />
+      </div>
+      <div className="sm:hidden">
+        <HamburgerMenu />
+      </div>
+      <main className="min-h-screen bg-gray-200 p-8 sm:ml-64 pt-20 sm:pt-8" style={{ transform: 'translateZ(0)' }}>
           <div className="mb-6">
             <button
               onClick={() => router.push('/pacientes')}
@@ -341,14 +357,14 @@ const EstadisticasPaciente = () => {
           )}
 
           <div className="bg-white rounded-lg p-6 mb-6 shadow-md">
-            <div className="flex items-center gap-8">
+            <div className="flex flex-wrap items-center gap-8">
               <div className="flex items-center gap-3">
                 <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-gray-500">Nombre</p>
-                  <p className="font-semibold text-gray-800">{paciente.nombre}</p>
+                  <p className="font-semibold text-gray-800 truncate">{paciente.nombre}</p>
                 </div>
               </div>
 
@@ -356,9 +372,9 @@ const EstadisticasPaciente = () => {
                 <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-gray-500">Email</p>
-                  <p className="font-semibold text-gray-800">{paciente.email || `${paciente.nombre.toLowerCase().replace(/\s+/g, '.') }@clinicheck.com`}</p>
+                  <p className="font-semibold text-gray-800 truncate">{paciente.email || `${paciente.nombre.toLowerCase().replace(/\s+/g, '.') }@clinicheck.com`}</p>
                 </div>
               </div>
 
@@ -416,12 +432,12 @@ const EstadisticasPaciente = () => {
             </div>
           ) : (
             <>
-            <div className="grid grid-cols-3 gap-6 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
               {estadisticas.map((stat, index) => {
                 if (stat.tipo === 'texto') return null;
 
                 return (
-                  <div key={index} className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden flex flex-col border border-gray-200">
+                  <div key={index} className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden flex flex-col border border-gray-200 w-full" style={{ backfaceVisibility: 'hidden', transform: 'translateZ(0)' }}>
                     <div className="bg-gray-50 px-5 py-4 border-b border-gray-200">
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-white rounded-lg shadow-sm border border-gray-200">

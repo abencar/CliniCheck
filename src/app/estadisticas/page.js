@@ -1,6 +1,7 @@
 'use client'
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../../components/Sidebar';
+import HamburgerMenu from '../../components/HamburgerMenu';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import {
   Chart as ChartJS,
@@ -147,12 +148,21 @@ const Estadisticas = () => {
 
   return (
     <ProtectedRoute>
-      <div className="flex min-h-screen bg-gray-200">
-        <Sidebar />
-        <main className="flex-1 p-8 ml-64">
+      <div className="flex min-h-screen bg-gray-200 overflow-x-hidden">
+        <div className="hidden sm:block">
+          <Sidebar />
+        </div>
+        <div className="sm:hidden">
+          <HamburgerMenu />
+        </div>
+        <main className="flex-1 px-4 py-8 sm:px-8 sm:ml-64 pt-20 sm:pt-8 isolate transform-gpu antialiased overflow-x-hidden">
           <div className="mb-6">
-            <h1 className="text-4xl font-bold text-gray-800 mb-2">Estadísticas de Estado de Salud</h1>
-            <p className="text-gray-600">Análisis del bienestar de los pacientes con filtros demográficos</p>
+              <div className="flex flex-wrap items-center gap-4">
+              <div className="min-w-0">
+                <h1 className="text-4xl font-bold text-gray-800 mb-2 whitespace-normal">Estadísticas de Estado de Salud</h1>
+                <p className="text-gray-600 whitespace-normal">Análisis del bienestar de los pacientes con filtros demográficos</p>
+              </div>
+            </div>
           </div>
           {loading ? (
             <div className="flex justify-center items-center py-20">
@@ -213,29 +223,29 @@ const Estadisticas = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-4 gap-4 mb-6">
-                <div className="bg-white rounded-lg p-4 shadow-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="bg-white rounded-lg p-4 shadow-sm w-full overflow-hidden bg-clip-padding sm:shadow-sm shadow-none" style={{ backfaceVisibility: 'hidden', transform: 'translateZ(0)' }}>
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-blue-400 rounded-full flex items-center justify-center"><svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg></div>
                     <div><p className="text-xs text-gray-600">Pacientes Evaluados</p><p className="text-2xl font-bold text-[#0D9498]">{estadisticas.totalPacientes}</p></div>
                   </div>
                 </div>
 
-                <div className="bg-white rounded-lg p-4 shadow-sm">
+                <div className="bg-white rounded-lg p-4 shadow-sm w-full overflow-hidden bg-clip-padding sm:shadow-sm shadow-none" style={{ backfaceVisibility: 'hidden', transform: 'translateZ(0)' }}>
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-green-400 rounded-full flex items-center justify-center"><svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg></div>
                     <div><p className="text-xs text-gray-600">Edad Promedio</p><p className="text-2xl font-bold text-green-600">{estadisticas.edadPromedio} años</p></div>
                   </div>
                 </div>
 
-                <div className="bg-white rounded-lg p-4 shadow-sm">
+                <div className="bg-white rounded-lg p-4 shadow-sm w-full overflow-hidden bg-clip-padding sm:shadow-sm shadow-none" style={{ backfaceVisibility: 'hidden', transform: 'translateZ(0)' }}>
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-pink-400 rounded-full flex items-center justify-center"><svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg></div>
                     <div><p className="text-xs text-gray-600">Género Predominante</p><p className="text-2xl font-bold text-pink-600">{estadisticas.generoPredominante}</p></div>
                   </div>
                 </div>
 
-                <div className="bg-white rounded-lg p-4 shadow-sm">
+                <div className="bg-white rounded-lg p-4 shadow-sm w-full overflow-hidden bg-clip-padding sm:shadow-sm shadow-none" style={{ backfaceVisibility: 'hidden', transform: 'translateZ(0)' }}>
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center"><svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2C8.13 2 5 5.13 5 9c0 3.87 7 13 7 13s7-9.13 7-13c0-3.87-3.13-7-7-7z" /></svg></div>
                     <div><p className="text-xs text-gray-600">Ubicación Más Común</p><p className="text-2xl font-bold text-yellow-600">{estadisticas.ubicacionComun}</p></div>
@@ -249,7 +259,7 @@ const Estadisticas = () => {
                     const datosGrafica = generarDatosGrafica(pregunta, index);
                     if (!datosGrafica) return null;
                     return (
-                      <div key={index} className="bg-white p-4 rounded-lg shadow-sm">
+                      <div key={index} className="bg-white p-4 rounded-lg shadow-sm w-full overflow-hidden bg-clip-padding" style={{ backfaceVisibility: 'hidden', transform: 'translateZ(0)' }}>
                         <h3 className="text-sm font-semibold mb-3 text-gray-700">{pregunta.texto}</h3>
                         <div className="h-64">
                           {pregunta.tipo === 'numerica' || pregunta.tipo === 'escala' ? (

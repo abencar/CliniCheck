@@ -1,6 +1,7 @@
 'use client'
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../../components/Sidebar';
+import HamburgerMenu from '../../components/HamburgerMenu';
 import ProtectedRoute, { useUser } from '../../components/ProtectedRoute';
 
 const ResumenContent = () => {
@@ -54,11 +55,13 @@ const ResumenContent = () => {
 
   return (
     <>
-      {/* 🔹 Sidebar fijo fuera del flujo principal */}
-      <Sidebar />
-
-      {/* 🔹 Contenido principal con margen izquierdo */}
-      <main className="ml-64 min-h-screen bg-gray-200 p-8">
+      <div className="hidden sm:block">
+        <Sidebar />
+      </div>
+      <div className="sm:hidden">
+        <HamburgerMenu />
+      </div>
+      <main className="min-h-screen bg-gray-200 p-8 sm:ml-64 pt-20 sm:pt-8">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-gray-800 mb-2">
             {esMedico ? 'Resumen del médico' : 'Panel de administración'}
@@ -68,15 +71,15 @@ const ResumenContent = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-4 gap-6 mb-8">
-          {/* Tarjetas resumen */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+
           <ResumenCard color="blue" label={esMedico ? 'Tus pacientes' : 'Total de pacientes'} value={loading ? '...' : pacientes.length} />
           <ResumenCard color="green" label="Total de médicos" value={loading ? '...' : medicos.length} />
           <ResumenCard color="pink" label={esMedico ? 'Encuestas de tus pacientes' : 'Encuestas creadas'} value={loading ? '...' : (esMedico ? encuestasDeMisPacientes.size : encuestas.length)} />
           <ResumenCard color="yellow" label="Citas pendientes" value={loading ? '...' : citasPendientes} />
         </div>
 
-        {/* Últimas encuestas */}
+
         <div className="bg-white rounded-xl shadow-lg p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-xl font-bold text-gray-800">Últimas encuestas respondidas</h3>
@@ -125,7 +128,6 @@ const ResumenContent = () => {
   );
 };
 
-/* 🔸 Componente auxiliar para tarjetas */
 const ResumenCard = ({ color, label, value }) => {
   const colorClass = {
     blue: 'bg-blue-400',

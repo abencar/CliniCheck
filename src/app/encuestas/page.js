@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import Sidebar from '../../components/Sidebar';
+import HamburgerMenu from '../../components/HamburgerMenu';
 import ProtectedRoute from '../../components/ProtectedRoute';
 
 const Encuestas = () => {
@@ -211,26 +212,30 @@ const Encuestas = () => {
   return (
     <ProtectedRoute>
       <div className="flex min-h-screen bg-gray-200">
-        <Sidebar />
-
-        <main className="flex-1 p-8 ml-64">
-          <div className="flex justify-between items-start mb-6">
+        <div className="hidden sm:block">
+          <Sidebar />
+        </div>
+        <div className="sm:hidden">
+          <HamburgerMenu />
+        </div>
+        <main className="flex-1 pt-20 sm:pt-8 px-4 sm:px-8 overflow-x-hidden isolate transform-gpu antialiased sm:ml-64">
+          <div className="flex flex-col md:flex-row justify-between items-start mb-6 gap-4">
             <div>
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Administracion de encuestas</h1>
-            <p className="text-gray-600">Gestione las encuestas de seguimiento para cada fármaco</p>
+              <p className="text-gray-600">Gestione las encuestas de seguimiento para cada fármaco</p>
+            </div>
+            <button 
+              onClick={() => setShowModal(true)}
+              className="self-start md:self-center md:ml-auto flex items-center gap-2 bg-[#0D9498] hover:bg-[#0a7377] text-white px-4 py-2 rounded-lg font-medium transition"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Crear encuesta
+            </button>
           </div>
-          <button 
-            onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 bg-[#0D9498] hover:bg-[#0a7377] text-white px-4 py-2 rounded-lg font-medium transition"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            Crear encuesta
-          </button>
-        </div>
 
-        <div className="bg-white rounded-xl shadow-lg p-6">
+        <div className="p-6">
           {loading && (
             <div className="p-8 text-center text-gray-600">
               Cargando encuestas...
@@ -253,18 +258,19 @@ const Encuestas = () => {
             {!loading && !error && encuestas.map((encuesta) => (
               <div 
                 key={encuesta.id}
-                className="flex items-center justify-between p-4 rounded-lg hover:bg-gray-50 transition bg-white border border-gray-200"
+                className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 rounded-xl bg-white border border-gray-200 hover:shadow-sm transition min-h-[120px] md:min-h-0 overflow-hidden relative"
+                style={{ backfaceVisibility: 'hidden', transform: 'translateZ(0)' }}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 min-w-0">
                   <div className="w-10 h-10 bg-[#0D9498] rounded-full flex items-center justify-center flex-shrink-0">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                   </div>
-                  <span className="font-semibold text-gray-700 text-lg">{encuesta.nombre}</span>
+                  <span className="font-semibold text-gray-700 text-lg truncate min-w-0">{encuesta.nombre}</span>
                 </div>
                 
-                <div className="flex gap-2">
+                <div className="flex flex-row gap-2 mt-3 md:mt-0 md:ml-auto">
                   <button 
                     onClick={() => handleEditClick(encuesta)}
                     className="p-2 hover:bg-gray-100 rounded-lg transition"

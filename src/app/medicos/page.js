@@ -1,6 +1,7 @@
 'use client'
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../../components/Sidebar';
+import HamburgerMenu from '../../components/HamburgerMenu';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import RoleProtection from '../../components/RoleProtection';
 import toast from 'react-hot-toast';
@@ -211,11 +212,15 @@ const Medicos = () => {
   return (
     <ProtectedRoute>
       <RoleProtection allowedRoles={['admin']}>
-        <div className="flex min-h-screen bg-gray-200">
-          <Sidebar />
-
-        <main className="flex-1 p-8 ml-64">
-          <div className="flex justify-between items-start mb-6">
+        <div className="flex min-h-screen bg-gray-200 overflow-x-hidden">
+          <div className="hidden sm:block">
+            <Sidebar />
+          </div>
+          <div className="sm:hidden">
+            <HamburgerMenu />
+          </div>
+          <main className="flex-1 px-4 py-8 sm:px-8 sm:ml-64 pt-20 sm:pt-8 isolate transform-gpu antialiased overflow-x-hidden">
+            <div className="flex justify-between items-start mb-6">
           <div>
             <h1 className="text-4xl font-bold text-gray-800 mb-2">Gestión de médicos</h1>
             <p className="text-gray-600">Administra el equipo médico de la clínica</p>
@@ -230,7 +235,7 @@ const Medicos = () => {
         </div>
 
         <div className="mb-4">
-          <div className="relative max-w-md">
+          <div className="relative max-w-full sm:max-w-md">
             <svg className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
@@ -248,7 +253,7 @@ const Medicos = () => {
           <span className="text-gray-600 text-sm">Mostrando {medicosFiltrados.length} de {medicos.length} médicos</span>
         </div>
 
-        <div className="bg-white rounded-xl shadow-lg p-6">
+        <div className="bg-white rounded-xl shadow-lg p-6 w-full overflow-hidden">
           {loading && (
             <div className="p-8 text-center text-gray-600">
               Cargando médicos...
@@ -277,7 +282,8 @@ const Medicos = () => {
             {!loading && !error && medicosFiltrados.map((medico) => (
               <div 
                 key={medico.id}
-                className="flex items-center justify-between p-4 rounded-lg hover:bg-gray-50 transition bg-white border border-gray-200"
+                className="flex items-center justify-between p-4 rounded-lg hover:bg-gray-50 transition bg-white border border-gray-200 bg-clip-padding sm:shadow-sm shadow-none"
+                style={{ backfaceVisibility: 'hidden', transform: 'translateZ(0)' }}
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-[#0D9498] rounded-full flex items-center justify-center flex-shrink-0">
@@ -285,10 +291,10 @@ const Medicos = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   </div>
-                  <div>
-                    <p className="font-semibold text-gray-800 text-lg">{medico.nombre}</p>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-gray-800 text-lg truncate">{medico.nombre}</p>
                     {medico.especialidad && (
-                      <p className="text-sm text-gray-600">{medico.especialidad}</p>
+                      <p className="text-sm text-gray-600 truncate">{medico.especialidad}</p>
                     )}
                   </div>
                 </div>
