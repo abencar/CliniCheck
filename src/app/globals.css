@@ -24,3 +24,44 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.heart-beat {
+  transform: scale(1.18);
+  transition: transform 360ms cubic-bezier(.2,.8,.2,1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heart-beat {
+    transition: none;
+    transform: none;
+  }
+}
+
+
+@keyframes heartPum {
+  0%   { transform: scale(1); }
+  6%   { transform: scale(1.18); }
+  12%  { transform: scale(1); }
+  18%  { transform: scale(1.08); } 
+  24%  { transform: scale(1); }
+  100% { transform: scale(1); }
+}
+
+.heart-pulse {
+  animation: heartPum 1.4s cubic-bezier(.2,.8,.2,1) infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heart-pulse {
+    animation: none;
+    transform: none;
+  }
+}
+
+/* Hide any large spinner elements inside the Estadisticas page so skeletons are visible */
+.estadisticas-main .animate-spin,
+.estadisticas-main .blocking-spinner,
+.estadisticas-main .spinner-overlay {
+  display: none !important;
+}

@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
@@ -10,6 +10,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const heartRef = useRef(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -52,6 +53,19 @@ const Login = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReduced) return;
+
+    const el = heartRef.current;
+    if (el) el.classList.add('heart-pulse');
+
+    return () => {
+      if (el) el.classList.remove('heart-pulse');
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#0D9498] flex flex-col items-center justify-center">
@@ -113,7 +127,8 @@ const Login = () => {
 
       <div className="mt-8">
         <svg 
-          className="w-16 h-16 text-white drop-shadow-lg" 
+          ref={heartRef}
+          className="w-16 h-16 text-white drop-shadow-lg transition-transform" 
           fill="none" 
           stroke="currentColor" 
           viewBox="0 0 24 24"
