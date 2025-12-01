@@ -1,6 +1,30 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, serverTimestamp, doc, updateDoc, getDoc, query, where } from 'firebase/firestore';
+import nodemailer from 'nodemailer';
+
+const smtpHost = process.env.SMTP_HOST;
+const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
+const smtpUser = process.env.SMTP_USER;
+const smtpPass = process.env.SMTP_PASS;
+const smtpFrom = process.env.SMTP_FROM;
+const smtpSecure = process.env.SMTP_SECURE === 'true' || smtpPort === 465;
+
+let mailTransporter;
+
+const getMailTransporter = () => {
+  if (mailTransporter) return mailTransporter;
+  if (!smtpHost || !smtpUser || !smtpPass) return null;
+
+  mailTransporter = nodemailer.createTransport({
+    host: smtpHost,
+    port: smtpPort,
+    secure: smtpSecure,
+    auth: { user: smtpUser, pass: smtpPass }
+  });
+
+  return mailTransporter;
+};
 
 export async function GET(request) {
   try {
@@ -154,10 +178,87 @@ export async function PATCH(request) {
     }
 
     const citaRef = doc(db, 'citas', id);
+    
+    // Obtener datos de la cita antes de actualizar para enviar correo
+    const citaSnap = await getDoc(citaRef);
+    const citaData = citaSnap.exists() ? citaSnap.data() : null;
+    
     await updateDoc(citaRef, {
       ...updates,
       updatedAt: serverTimestamp()
     });
+
+    // Si se actualizó el estado, enviar correo al paciente
+    if (updates.estado && citaData?.pacienteId) {
+      try {
+        const transporter = getMailTransporter();
+        if (transporter) {
+          // Obtener datos del paciente
+          const pacienteRef = doc(db, 'pacientes', citaData.pacienteId);
+          const pacienteSnap = await getDoc(pacienteRef);
+          
+          if (pacienteSnap.exists()) {
+            const paciente = pacienteSnap.data();
+            const pacienteEmail = paciente.email;
+            const pacienteNombre = paciente.nombre || 'Paciente';
+            
+            if (pacienteEmail) {
+              const estadoTexto = updates.estado === 'confirmado' 
+                ? '✅ CONFIRMADA' 
+                : updates.estado === 'rechazado' 
+                  ? '❌ RECHAZADA' 
+                  : '⏳ PENDIENTE';
+              
+              const estadoMensaje = updates.estado === 'confirmado'
+                ? 'Tu cita ha sido confirmada. Te esperamos en la fecha y hora indicada.'
+                : updates.estado === 'rechazado'
+                  ? 'Lamentablemente tu cita ha sido rechazada. Por favor, solicita una nueva cita en otro horario.'
+                  : 'El estado de tu cita ha sido actualizado.';
+
+              // Formatear fecha de la cita si existe
+              let fechaCitaTexto = '';
+              if (citaData.fecha) {
+                const fechaCita = citaData.fecha.toDate ? citaData.fecha.toDate() : new Date(citaData.fecha);
+                fechaCitaTexto = fechaCita.toLocaleDateString('es-ES', { 
+                  weekday: 'long', 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                });
+              }
+
+              const subject = `CliniCheck - Tu cita ha sido ${updates.estado === 'confirmado' ? 'confirmada' : updates.estado === 'rechazado' ? 'rechazada' : 'actualizada'}`;
+              
+              const plainText = `Hola ${pacienteNombre},\n\n${estadoMensaje}\n\nEstado: ${estadoTexto}${fechaCitaTexto ? `\nFecha: ${fechaCitaTexto}` : ''}${citaData.motivo ? `\nMotivo: ${citaData.motivo}` : ''}\n\nGracias,\nEquipo CliniCheck`;
+              
+              const htmlBody = `<!doctype html><html><body>
+                <p>Hola <strong>${pacienteNombre}</strong>,</p>
+                <p>${estadoMensaje}</p>
+                <div style="background-color: ${updates.estado === 'confirmado' ? '#d4edda' : updates.estado === 'rechazado' ? '#f8d7da' : '#fff3cd'}; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                  <p style="margin: 0; font-size: 18px;"><strong>Estado:</strong> ${estadoTexto}</p>
+                  ${fechaCitaTexto ? `<p style="margin: 5px 0 0 0;"><strong>Fecha:</strong> ${fechaCitaTexto}</p>` : ''}
+                  ${citaData.motivo ? `<p style="margin: 5px 0 0 0;"><strong>Motivo:</strong> ${citaData.motivo}</p>` : ''}
+                </div>
+                <p>Gracias,<br>Equipo CliniCheck</p>
+              </body></html>`;
+
+              await transporter.sendMail({
+                from: smtpFrom || `CliniCheck <${smtpUser}>`,
+                to: pacienteEmail,
+                subject,
+                text: plainText,
+                html: htmlBody
+              });
+            }
+          }
+        }
+      } catch (mailError) {
+        console.error('Error enviando correo de actualización de cita:', mailError);
+        // No fallar la actualización si el correo no se envía
+      }
+    }
 
     return NextResponse.json({ message: 'Cita actualizada' }, { status: 200 });
   } catch (error) {
