@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy, limit, doc, getDoc } from 'firebase/firestore';
 
 // GET /api/movil/datos?userUid=...
 export async function GET(request) {
@@ -28,7 +28,43 @@ export async function GET(request) {
         medicoNombre = medicoData.nombre || null;
       }
     }
-    return NextResponse.json({ ...pacienteData, medicoNombre }, { status: 200 });
+    // --- NUEVO: buscar la última respuesta de este paciente ---
+    const respuestasRef = collection(db, 'respuestas');
+    const rQuery = query(
+      respuestasRef,
+      where('pacienteId', '==', userUid),
+      orderBy('createdAt', 'desc'),
+      limit(1)
+    );
+    const rSnap = await getDocs(rQuery);
+
+    let ultimaEncuesta = null;
+    if (!rSnap.empty) {
+      const rDoc = rSnap.docs[0];
+      const rData = rDoc.data();
+      const fecha = rData.createdAt && typeof rData.createdAt.toDate === 'function'
+        ? rData.createdAt.toDate().toISOString()
+        : rData.createdAt || null;
+
+      // opcional: traer metadata de la encuesta respondida
+      let encuestaMeta = null;
+      if (rData.encuestaId) {
+        const encuestaRef = doc(db, 'encuestas', rData.encuestaId);
+        const encuestaDoc = await getDoc(encuestaRef);
+        if (encuestaDoc.exists()) {
+          encuestaMeta = { id: encuestaDoc.id, ...encuestaDoc.data() };
+        }
+      }
+
+      ultimaEncuesta = {
+        respuestaId: rDoc.id,
+        encuestaId: rData.encuestaId || null,
+        fecha,
+        encuestaMeta
+      };
+    }
+
+    return NextResponse.json({ ...pacienteData, medicoNombre, ultimaEncuesta }, { status: 200 });
   } catch (error) {
     console.error('Error al obtener datos del paciente:', error);
     return NextResponse.json({ error: 'Error al obtener datos del paciente' }, { status: 500 });
