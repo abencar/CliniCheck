@@ -8,6 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@vercel/analytics": "^1.6.1",
     "chart.js": "^4.5.1",
     "firebase": "^12.4.0",
     "firebase-admin": "^13.6.0",
