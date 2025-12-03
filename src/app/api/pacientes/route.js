@@ -214,7 +214,7 @@ export async function POST(request) {
     });
 
     const nombrePaciente = patientData.nombre || 'Paciente';
-    const appDownloadUrl = process.env.NEXT_PUBLIC_APP_URL ? `${process.env.NEXT_PUBLIC_APP_URL}/descargar` : 'https://clinicheck.vercel.app/descargar';
+    const appDownloadUrl = process.env.NEXT_PUBLIC_APP_URL ? `${process.env.NEXT_PUBLIC_APP_URL}/descargar` : 'https://clini-check.vercel.app/descargar';
     const subject = 'Tu acceso a CliniCheck';
     const plainText = `Hola ${nombrePaciente},\n\nTu cuenta en CliniCheck se creó correctamente.\n\nCorreo: ${email}\nContraseña: ${generatedPassword}\n\nDescarga la aplicación móvil desde: ${appDownloadUrl}\n\nTe recomendamos iniciar sesión dentro de la app para empezar con las encuestas.\n\nGracias,\nEquipo CliniCheck`;
     const htmlBody = `<!doctype html><html><body><p>Hola <strong>${nombrePaciente}</strong>,</p><p>Tu cuenta en CliniCheck se creó correctamente.</p><p><strong>Correo:</strong> ${email}<br><strong>Contraseña:</strong> ${generatedPassword}</p><p>📱 <strong>Descarga la aplicación:</strong> <a href="${appDownloadUrl}">${appDownloadUrl}</a></p><p>Te recomendamos iniciar sesión dentro de la app para empezar con las encuestas.</p><p>Gracias,<br>Equipo CliniCheck</p></body></html>`;
