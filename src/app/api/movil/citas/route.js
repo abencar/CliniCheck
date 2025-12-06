@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, query, where, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 
 export async function GET(request) {
   try {
@@ -69,7 +69,7 @@ export async function GET(request) {
   }
 }
 
-// Permite que un paciente cancele su última cita si está pendiente
+// Permite que un paciente elimine su última cita si está pendiente
 export async function DELETE(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -101,13 +101,9 @@ export async function DELETE(request) {
     }
 
     const citaRef = doc(db, 'citas', ultimaCita.id);
-    await updateDoc(citaRef, {
-      estado: 'cancelado_por_paciente',
-      canceladoPor: userUid,
-      canceladoEn: serverTimestamp()
-    });
+    await deleteDoc(citaRef);
 
-    return NextResponse.json({ message: 'Cita cancelada', id: ultimaCita.id }, { status: 200 });
+    return NextResponse.json({ message: 'Cita eliminada exitosamente', id: ultimaCita.id }, { status: 200 });
   } catch (error) {
     console.error('Error cancelando cita (movil):', error);
     return NextResponse.json({ error: 'Error al cancelar cita' }, { status: 500 });
