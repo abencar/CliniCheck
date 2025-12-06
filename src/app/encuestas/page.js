@@ -14,6 +14,7 @@ const Encuestas = () => {
   const [formData, setFormData] = useState({
     titulo: '',
     descripcion: '',
+    farmaco: '',
     preguntas: [{ texto: '', tipo: '', opciones: [''] }]
   });
   const [submitting, setSubmitting] = useState(false);
@@ -125,6 +126,7 @@ const Encuestas = () => {
     setFormData({
       titulo: encuesta.nombre || '',
       descripcion: encuesta.descripcion || '',
+      farmaco: encuesta.farmaco || '',
       preguntas: encuesta.preguntas || [{ texto: '', tipo: '', opciones: [''] }]
     });
     setShowModal(true);
@@ -136,6 +138,7 @@ const Encuestas = () => {
     setFormData({
       titulo: '',
       descripcion: '',
+      farmaco: '',
       preguntas: [{ texto: '', tipo: '', opciones: [''] }]
     });
   };
@@ -173,6 +176,7 @@ const Encuestas = () => {
           body: JSON.stringify({
             nombre: formData.titulo,
             descripcion: formData.descripcion,
+            farmaco: formData.farmaco,
             preguntas: formData.preguntas
           }),
         });
@@ -188,6 +192,7 @@ const Encuestas = () => {
           body: JSON.stringify({
             nombre: formData.titulo,
             descripcion: formData.descripcion,
+            farmaco: formData.farmaco,
             preguntas: formData.preguntas
           }),
         });
@@ -267,7 +272,12 @@ const Encuestas = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                   </div>
-                  <span className="font-semibold text-gray-700 text-lg truncate min-w-0">{encuesta.nombre}</span>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-gray-700 text-lg truncate">{encuesta.nombre}</p>
+                    {encuesta.farmaco && (
+                      <p className="text-sm text-gray-500 truncate">Fármaco: {encuesta.farmaco}</p>
+                    )}
+                  </div>
                 </div>
                 
                 <div className="flex flex-row gap-2 mt-3 md:mt-0 md:ml-auto">
@@ -349,6 +359,22 @@ const Encuestas = () => {
                     rows="3"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0D9498] placeholder:text-gray-400 text-gray-900"
                     placeholder="Descripción de la encuesta"
+                  />
+                </div>
+
+
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Fármaco
+                  </label>
+                  <input
+                    type="text"
+                    name="farmaco"
+                    value={formData.farmaco}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0D9498] placeholder:text-gray-400 text-gray-900"
+                    placeholder="Nombre comercial o principio activo"
                   />
                 </div>
 
