@@ -4,7 +4,7 @@ import { doc, updateDoc, deleteDoc, getDoc } from 'firebase/firestore';
 
 export async function PUT(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     
     const encuestaRef = doc(db, 'encuestas', id);
@@ -34,7 +34,7 @@ export async function PUT(request, { params }) {
 
 export async function DELETE(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     
     const encuestaRef = doc(db, 'encuestas', id);
     
@@ -63,7 +63,7 @@ export async function DELETE(request, { params }) {
 
 export async function GET(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const encuestaRef = doc(db, 'encuestas', id);
     const encuestaDoc = await getDoc(encuestaRef);
     if (!encuestaDoc.exists()) {

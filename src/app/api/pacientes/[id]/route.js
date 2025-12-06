@@ -4,7 +4,7 @@ import { doc, updateDoc, deleteDoc, getDoc } from 'firebase/firestore';
 
 export async function PUT(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const { userUid, ...updates } = body;
     if (!userUid) {
@@ -44,7 +44,7 @@ export async function PUT(request, { params }) {
 
 export async function DELETE(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const { searchParams } = new URL(request.url);
     const userUid = searchParams.get('userUid');
     if (!userUid) {
